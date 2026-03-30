@@ -11,16 +11,12 @@
 
   <style>
     body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    
-    /* Login Screen */
     #loginScreen { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0d6efd, #0dcaf0); }
     .login-card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center; }
     
-    /* Main App */
     #mainDashboard { display: none; padding-bottom: 80px; }
     .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .stat-card { border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; }
-    .stat-card:hover { transform: translateY(-3px); }
+    .stat-card { border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
     
     .student-card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #ccc; cursor: pointer; transition: all 0.2s; }
     .student-card.selected { background-color: #e8f4fd; border-left-color: #0d6efd; transform: scale(1.02); }
@@ -29,19 +25,13 @@
     .status-masuk { background-color: #d1e7dd; color: #0f5132; }
     .status-keluar { background-color: #f8d7da; color: #842029; }
     .status-sakit { background-color: #fff3cd; color: #664d03; }
-
-    /* Pending Card for Warden */
     .pending-card { border-left: 5px solid #ffc107; background: #fffcf2; }
 
-    /* Floating Action Button & Footer */
     .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 10px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
     
-    /* Loader & Toasts */
     #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-    .spinner-border { width: 3rem; height: 3rem; }
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-    .custom-toast { background: white; border-radius: 8px; padding: 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 10px; display: none; font-weight: 500; animation: fadeIn 0.3s; border-left: 4px solid #0d6efd; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .custom-toast { background: white; border-radius: 8px; padding: 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 10px; display: none; font-weight: 500; border-left: 4px solid #0d6efd; }
   </style>
 </head>
 <body>
@@ -96,16 +86,31 @@
       </div>
 
       <div class="row g-2 mb-3">
-        <div class="col-8">
-          <input type="text" id="searchInput" class="form-control" placeholder="Cari nama murid..." onkeyup="filterList()">
+        <div class="col-7">
+          <input type="text" id="searchInput" class="form-control" placeholder="Cari Nama, Kelas, Dorm..." onkeyup="filterList()">
         </div>
-        <div class="col-4">
+        <div class="col-5">
           <select id="filterStatus" class="form-select" onchange="filterList()">
             <option value="Semua">Semua</option>
             <option value="Masuk">Masuk</option>
             <option value="Keluar">Keluar</option>
             <option value="Sakit">Sakit</option>
           </select>
+        </div>
+        <div class="col-12 mt-1">
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-check-double"></i> Pilih Pukal (Senarai Terkini)
+            </button>
+            <ul class="dropdown-menu w-100 shadow-sm">
+              <li><a class="dropdown-item" href="#" onclick="pilihPukal('Semua')">✅ Pilih Semua (Tersenarai)</a></li>
+              <li><a class="dropdown-item" href="#" onclick="pilihPukal('Masuk')"><i class="fas fa-sign-in-alt text-success"></i> Pilih Semua: Masuk</a></li>
+              <li><a class="dropdown-item" href="#" onclick="pilihPukal('Keluar')"><i class="fas fa-sign-out-alt text-danger"></i> Pilih Semua: Keluar</a></li>
+              <li><a class="dropdown-item" href="#" onclick="pilihPukal('Sakit')"><i class="fas fa-procedures text-warning"></i> Pilih Semua: Sakit</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" onclick="clearSelection()"><i class="fas fa-times-circle"></i> Batal Semua Pilihan</a></li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -146,23 +151,23 @@
             <div class="row g-2 mb-3">
               <div class="col-6">
                 <label class="form-label text-muted">Tarikh</label>
-                <input type="date" class="form-control" id="customDate" name="customDate" required>
+                <input type="date" class="form-control" id="customDate" required>
               </div>
               <div class="col-6">
                 <label class="form-label text-muted">Masa</label>
-                <input type="time" class="form-control" id="customTime" name="customTime" required>
+                <input type="time" class="form-control" id="customTime" required>
               </div>
             </div>
 
             <div class="mb-3" id="reasonGroup">
               <label class="form-label text-muted">Sebab / Tujuan</label>
-              <textarea class="form-control" id="reason" name="reason" rows="2" placeholder="Cth: Pulang bermalam / Ke Klinik Kesihatan"></textarea>
+              <textarea class="form-control" id="reason" rows="2" placeholder="Cth: Pulang bermalam / Ke Klinik"></textarea>
             </div>
 
             <div class="mb-3">
               <label class="form-label text-muted">Gambar Bukti (Pilihan)</label>
               <input class="form-control" type="file" accept="image/*" capture="environment" id="cameraInput" onchange="compressAndConvertToBase64()">
-              <input type="hidden" id="imageFile" name="imageFile">
+              <input type="hidden" id="imageFile">
               <div id="imagePreview" class="mt-2 text-center" style="display:none;">
                 <img id="previewImg" src="" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
               </div>
@@ -185,7 +190,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p class="mb-1 text-muted small">Kelas / Blok</p>
+          <p class="mb-1 text-muted small">Kelas / Blok (Dorm)</p>
           <p class="fw-bold"><span id="d_class"></span> | <span id="d_block"></span></p>
           
           <p class="mb-1 text-muted small mt-3">Status Terkini</p>
@@ -200,29 +205,23 @@
           </div>
 
           <div id="d_img_box" class="mt-3 text-center" style="display:none;">
-            <p class="mb-1 text-muted small text-start">Gambar Bukti</p>
+            <p class="mb-1 text-muted small text-start">Lampiran / Gambar Bukti</p>
             <img id="d_img" src="" style="max-width: 100%; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <a id="d_img_link" href="#" target="_blank" class="btn btn-sm btn-outline-primary mt-2 w-100">Buka Gambar Penuh</a>
+            <a id="d_img_link" href="#" target="_blank" class="btn btn-sm btn-outline-primary mt-2 w-100"><i class="fas fa-external-link-alt"></i> Buka Gambar Penuh</a>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
     // ==============================================================
-    // 1. MASUKKAN URL WEB APP API ANDA DI BAWAH INI
-    // Contoh: "https://script.google.com/macros/s/AKfycb.../exec"
+    // MASUKKAN URL WEB APP API ANDA DI BAWAH INI (Yang Paling Baru)
     // ==============================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbyRaMZgorqF-FRqcxBvCin7gkVP5Hvr9ldOtoCh8JnDBU7DtYxrEjf5CTY9Vl2WQOUD/exec";
+    const API_URL = "MASUKKAN_URL_WEB_APP_DI_SINI_BERMULA_DENGAN_HTTPS";
 
-
-    // ==============================================================
-    // 2. PEMBOLEHUBAH GLOBAL & INISIALISASI
-    // ==============================================================
     let allStudents = [];
     let allPending = [];
     let selectedStudents = new Set(); 
@@ -243,37 +242,24 @@
       document.getElementById('customTime').value = now.toISOString().slice(11, 16);
     }
 
-    // ==============================================================
-    // 3. FUNGSI PANGGILAN API (FETCH)
-    // ==============================================================
     async function callServer(actionData) {
-      try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(actionData),
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain elak isu CORS Google
-        });
-        const result = await response.json();
-        if (result.status === "error") throw new Error(result.message);
-        return result.data;
-      } catch (error) {
-        throw error;
-      }
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(actionData),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const result = await response.json();
+      if (result.status === "error") throw new Error(result.message);
+      return result.data;
     }
 
-    // ==============================================================
-    // 4. LOGIK LOG MASUK & LOG KELUAR
-    // ==============================================================
     async function prosesLogMasuk() {
       const uname = document.getElementById('loginUsername').value;
       const pass = document.getElementById('loginPass').value;
       const btn = document.getElementById('btnLogin');
       const err = document.getElementById('loginError');
 
-      if(!uname || !pass) { 
-        err.innerText = "Sila isi ID Pengguna dan kata laluan."; 
-        err.style.display = 'block'; return; 
-      }
+      if(!uname || !pass) { err.innerText = "Sila isi ID Pengguna dan kata laluan."; err.style.display = 'block'; return; }
       btn.disabled = true; btn.innerText = "MENYEMAK..."; err.style.display = 'none';
 
       try {
@@ -288,7 +274,7 @@
            btn.disabled = false; btn.innerText = "LOG MASUK";
         }
       } catch(e) {
-         err.innerText = "Ralat komunikasi dengan pelayan: Sila semak pautan API."; err.style.display = 'block';
+         err.innerText = "Ralat komunikasi dengan pelayan. Sila semak pautan API."; err.style.display = 'block';
          btn.disabled = false; btn.innerText = "LOG MASUK";
       }
     }
@@ -302,58 +288,21 @@
       document.getElementById('btnLogin').innerText = "LOG MASUK";
     }
 
-    // ==============================================================
-    // 5. MUAT TURUN DATA DARI SERVER
-    // ==============================================================
     async function loadDataServer() {
       document.getElementById('loader').style.display = 'flex';
       clearSelection();
       try {
          const data = await callServer({ action: "getAppInitData", username: userEmail });
-         setupUIForRole(data.role, data.email);
+         document.getElementById('userBadge').innerText = (data.role === 'warden' ? 'Warden' : 'Pengawal');
+         if(data.role === 'warden') {
+           document.getElementById('chartSection').style.display = 'block';
+           document.getElementById('pendingSection').style.display = 'block';
+         }
          allPending = data.pending;
          renderPendingData();
          renderData(data.students); 
-      } catch (err) {
-         alert("Ralat memuat data: " + err.message); 
-         if(err.message.includes("Akses Ditolak")) logKeluar();
-      }
+      } catch (err) { alert("Ralat memuat data: " + err.message); }
       document.getElementById('loader').style.display = 'none'; 
-    }
-
-    function setupUIForRole(role, email) {
-      document.getElementById('userBadge').innerText = (role === 'warden' ? 'Warden' : 'Pengawal');
-      if(role === 'warden') {
-        document.getElementById('chartSection').style.display = 'block';
-        document.getElementById('pendingSection').style.display = 'block';
-      } else {
-        document.getElementById('chartSection').style.display = 'none';
-        document.getElementById('pendingSection').style.display = 'none';
-      }
-    }
-
-    // ==============================================================
-    // 6. RENDER UI & DASHBOARD
-    // ==============================================================
-    function updateDashboard(students) {
-      if(userRole !== 'warden') return;
-      let masuk=0, keluar=0, sakit=0;
-      students.forEach(s => {
-        if(s.status === 'Masuk') masuk++;
-        else if(s.status === 'Keluar') keluar++;
-        else if(s.status === 'Sakit') sakit++;
-      });
-      
-      const ctx = document.getElementById('statusChart').getContext('2d');
-      if (myPieChart) myPieChart.destroy();
-      myPieChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Masuk', 'Keluar', 'Sakit'],
-          datasets: [{ data: [masuk, keluar, sakit], backgroundColor: ['#198754', '#dc3545', '#ffc107'], borderWidth: 0 }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-      });
     }
 
     function renderData(data) {
@@ -362,6 +311,22 @@
       updateDashboard(allStudents);
     }
 
+    function updateDashboard(students) {
+      if(userRole !== 'warden') return;
+      let masuk=0, keluar=0, sakit=0;
+      students.forEach(s => {
+        if(s.status === 'Masuk') masuk++; else if(s.status === 'Keluar') keluar++; else if(s.status === 'Sakit') sakit++;
+      });
+      const ctx = document.getElementById('statusChart').getContext('2d');
+      if (myPieChart) myPieChart.destroy();
+      myPieChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: ['Masuk', 'Keluar', 'Sakit'], datasets: [{ data: [masuk, keluar, sakit], backgroundColor: ['#198754', '#dc3545', '#ffc107'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+      });
+    }
+
+    // FUNGSI CARIAN & PAPARAN DIKEMASKINI (Kelas, Dorm, dan Ikon Lampiran)
     function filterList() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
       const statusFilter = document.getElementById('filterStatus').value;
@@ -369,9 +334,12 @@
       container.innerHTML = '';
 
       const filtered = allStudents.filter(s => {
-        const matchName = s.name.toLowerCase().includes(searchTerm);
+        // Carian menyemak Nama, Kelas, ATAU Dorm (Block)
+        const matchSearch = String(s.name).toLowerCase().includes(searchTerm) || 
+                            String(s.classroom).toLowerCase().includes(searchTerm) || 
+                            String(s.block).toLowerCase().includes(searchTerm);
         const matchStatus = statusFilter === 'Semua' || s.status === statusFilter;
-        return matchName && matchStatus;
+        return matchSearch && matchStatus;
       });
 
       if(filtered.length === 0) {
@@ -383,11 +351,16 @@
         const isSel = selectedStudents.has(s.name) ? 'selected' : '';
         let badgeCls = s.status === 'Masuk' ? 'status-masuk' : (s.status === 'Keluar' ? 'status-keluar' : 'status-sakit');
         
-        let timeStr = "";
+        let timeStr = "-";
         if(s.timestamp) {
            let d = new Date(s.timestamp);
            timeStr = d.toLocaleDateString('ms-MY') + " " + d.toLocaleTimeString('ms-MY', {hour: '2-digit', minute:'2-digit'});
         }
+
+        // Jika ada gambar, tunjuk ikon Klip Kertas
+        let attachIcon = (s.imageUrl && s.imageUrl.trim() !== "") 
+          ? `<span class="badge bg-secondary ms-1" onclick="showDetails('${s.name}'); event.stopPropagation();" title="Ada Lampiran"><i class="fas fa-paperclip"></i> Lampiran</span>` 
+          : '';
 
         const div = document.createElement('div');
         div.className = `student-card ${isSel}`;
@@ -395,9 +368,9 @@
         div.innerHTML = `
           <div class="d-flex justify-content-between align-items-center">
             <div style="flex:1;" onclick="toggleSelection('${s.name}')">
-              <h6 class="mb-1">${s.name}</h6>
+              <h6 class="mb-1">${s.name} ${attachIcon}</h6>
               <small class="text-muted"><i class="fas fa-door-open me-1"></i>${s.classroom} | ${s.block}</small><br>
-              <small class="text-muted" style="font-size:0.75rem;"><i class="far fa-clock me-1"></i>${timeStr || '-'}</small>
+              <small class="text-muted" style="font-size:0.75rem;"><i class="far fa-clock me-1"></i>${timeStr}</small>
             </div>
             <div class="text-end ms-2">
               <span class="status-badge ${badgeCls} mb-2 d-inline-block">${s.status}</span><br>
@@ -409,15 +382,33 @@
       });
     }
 
+    // FUNGSI PILIH PUKAL
+    function pilihPukal(jenis) {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('filterStatus').value;
+
+      allStudents.forEach(s => {
+        const matchSearch = String(s.name).toLowerCase().includes(searchTerm) || String(s.classroom).toLowerCase().includes(searchTerm) || String(s.block).toLowerCase().includes(searchTerm);
+        const matchStatus = statusFilter === 'Semua' || s.status === statusFilter;
+        
+        // Hanya pilih dari senarai yang sedang dipaparkan/ditapis sekarang
+        if (matchSearch && matchStatus) {
+            if (jenis === 'Semua' || s.status === jenis) {
+                selectedStudents.add(s.name);
+            }
+        }
+      });
+      filterList(); // Render semula UI untuk tunjuk pilihan
+      updateBottomBar();
+    }
+
     function renderPendingData() {
       if(userRole !== 'warden') return;
       const container = document.getElementById('pendingContainer');
       document.getElementById('pendingCount').innerText = allPending.length;
       container.innerHTML = '';
       
-      if(allPending.length === 0) {
-        document.getElementById('pendingSection').style.display = 'none'; return;
-      }
+      if(allPending.length === 0) { document.getElementById('pendingSection').style.display = 'none'; return; }
       document.getElementById('pendingSection').style.display = 'block';
 
       allPending.forEach(p => {
@@ -435,7 +426,7 @@
               <span class="status-badge ${badgeCls}">${p.action}</span>
               <small class="text-muted ms-2">${timeStr}</small>
               <p class="mb-0 mt-1 small text-secondary"><i class="fas fa-comment-dots"></i> ${p.reason || '-'}</p>
-              ${p.imageUrl ? `<a href="${p.imageUrl}" target="_blank" class="small text-primary"><i class="fas fa-image"></i> Lihat Gambar</a>` : ''}
+              ${p.imageUrl ? `<a href="${p.imageUrl}" target="_blank" class="badge bg-secondary text-decoration-none mt-1"><i class="fas fa-paperclip"></i> Lihat Gambar</a>` : ''}
               <p class="mb-0 mt-1 small text-muted" style="font-size:0.7rem;">Oleh: ${p.guardEmail}</p>
             </div>
             <div class="d-flex flex-column justify-content-center">
@@ -448,9 +439,6 @@
       });
     }
 
-    // ==============================================================
-    // 7. TINDAKAN UI (PILIH, MAKLUMAT & MODAL)
-    // ==============================================================
     function showDetails(name) {
        let s = allStudents.find(x => x.name === name);
        if(!s) return;
@@ -482,9 +470,7 @@
     }
 
     function toggleSelection(name) {
-      if(selectedStudents.has(name)) { selectedStudents.delete(name); } 
-      else { selectedStudents.add(name); }
-      
+      if(selectedStudents.has(name)) { selectedStudents.delete(name); } else { selectedStudents.add(name); }
       const card = document.getElementById('card-' + name.replace(/\s+/g, '-'));
       if(card) { card.classList.toggle('selected'); }
       updateBottomBar();
@@ -533,14 +519,11 @@
           var ctx = canvas.getContext('2d');
           var MAX_WIDTH = 800; var MAX_HEIGHT = 800;
           var width = img.width; var height = img.height;
-
           if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
           else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-
           canvas.width = width; canvas.height = height;
           ctx.drawImage(img, 0, 0, width, height);
-          var dataUrl = canvas.toDataURL('image/jpeg', 0.6); // 60% quality
-          
+          var dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
           document.getElementById('imageFile').value = dataUrl;
           document.getElementById('previewImg').src = dataUrl;
           document.getElementById('imagePreview').style.display = 'block';
@@ -550,14 +533,9 @@
       reader.readAsDataURL(file);
     }
 
-    // ==============================================================
-    // 8. PENGHANTARAN DATA (SUBMIT)
-    // ==============================================================
     function submitForm() {
       var f = document.getElementById('statusForm');
-      if(f.actionType.value !== 'Masuk' && f.reason.value.trim() === '') {
-         alert("Sila nyatakan sebab / tujuan."); return;
-      }
+      if(f.actionType.value !== 'Masuk' && f.reason.value.trim() === '') { alert("Sila nyatakan sebab / tujuan."); return; }
       actionModal.hide();
       document.getElementById('savingToast').style.display = 'block';
       sendDataOptimistic();
@@ -565,14 +543,11 @@
 
     async function sendDataOptimistic() {
       var f = document.getElementById('statusForm');
-      var rawNames = f.studentNames.value; 
-      var names = JSON.parse(rawNames);
-      var action = f.actionType.value; 
-      var reason = f.reason.value;
+      var rawNames = f.studentNames.value; var names = JSON.parse(rawNames);
+      var action = f.actionType.value; var reason = f.reason.value;
       var timestamp = f.customDate.value + 'T' + f.customTime.value;
       var imageBase64 = f.imageFile.value;
 
-      // Update UI serta merta (Optimistic UI) khas untuk Warden
       if(userRole === 'warden') {
           names.forEach(n => {
              var s = allStudents.find(x => x.name === n);
@@ -580,64 +555,47 @@
                s.status = action; 
                s.reason = (action === 'Masuk') ? '-' : reason; 
                s.timestamp = timestamp; 
+               if(imageBase64) s.imageUrl = imageBase64; // Masukkan gambar tempatan untuk paparan pantas
              }
           });
           renderData(allStudents);
       }
       clearSelection();
 
-      var d = { 
-        studentNames: rawNames, 
-        actionType: action, 
-        customDate: f.customDate.value, 
-        customTime: f.customTime.value, 
-        reason: reason, 
-        imageFile: imageBase64 
-      };
+      var d = { studentNames: rawNames, actionType: action, customDate: f.customDate.value, customTime: f.customTime.value, reason: reason, imageFile: imageBase64 };
       
       try {
          const res = await callServer({ action: "processEntry", data: d, username: userEmail });
          document.getElementById('savingToast').style.display = 'none';
-         
          var syncToast = document.getElementById('syncToast'); 
          syncToast.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i> ' + res;
-         syncToast.style.display = 'block';
-         setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
-         
-         if(userRole === 'guard') { loadDataServer(); } // Guard perlu refresh untuk pending
+         syncToast.style.display = 'block'; setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
+         if(userRole === 'guard') { loadDataServer(); } 
       } catch (err) {
          alert("Gagal menghantar rekod: " + err.message); 
-         document.getElementById('savingToast').style.display = 'none'; 
-         loadDataServer(); // Kembalikan UI ke data asal dari server
+         document.getElementById('savingToast').style.display = 'none'; loadDataServer(); 
       }
     }
 
     async function resolvePendingReq(id, isApproved) {
        document.getElementById('savingToast').style.display = 'block';
        var card = document.getElementById('pending-' + id); 
-       if (card) card.style.display = 'none'; // Sembunyi serta-merta
-
+       if (card) card.style.display = 'none'; 
        try {
           const res = await callServer({ action: "resolvePending", id: id, isApproved: isApproved, username: userEmail });
           document.getElementById('savingToast').style.display = 'none';
-          
           var syncToast = document.getElementById('syncToast');
           syncToast.innerHTML = '<i class="fas fa-info-circle text-info me-2"></i> ' + res;
-          syncToast.style.display = 'block'; 
-          setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
+          syncToast.style.display = 'block'; setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
           
-          // Refresh data selepas approve/reject
           const data = await callServer({ action: "getAppInitData", username: userEmail });
-          allPending = data.pending; 
-          renderPendingData(); 
-          renderData(data.students); 
+          allPending = data.pending; renderPendingData(); renderData(data.students); 
        } catch(err) {
           document.getElementById('savingToast').style.display = 'none';
           var syncToast = document.getElementById('syncToast');
           syncToast.innerHTML = '<i class="fas fa-exclamation-triangle text-danger me-2"></i> Gagal diproses.';
-          syncToast.style.display = 'block'; 
-          setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
-          if (card) card.style.display = 'block'; // Tunjuk semula jika gagal
+          syncToast.style.display = 'block'; setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
+          if (card) card.style.display = 'block'; 
        }
     }
   </script>
