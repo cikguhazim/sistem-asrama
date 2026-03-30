@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+      body { background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-bottom: 160px; }
+      
+      /* GAYA LOGIN SCREEN */
+      #loginScreen {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        z-index: 10000; display: flex; align-items: center; justify-content: center;
+      }
+      .login-card {
+        background: white; padding: 30px; border-radius: 20px;
+        width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      }
+      #mainDashboard { display: none; }
+
+      /* GAYA DASHBOARD */
+      .sticky-header { position: sticky; top: 0; z-index: 1020; background-color: #f4f6f8; padding-top: 15px; padding-bottom: 5px; }
+      .student-card { border: none; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); background: white; margin-bottom: 10px; transition: transform 0.1s; }
+      .student-card:active { transform: scale(0.98); }
+      .card-status-bar { height: 6px; border-radius: 12px 12px 0 0; }
+      .clickable-area { cursor: pointer; }
+      .clickable-area:hover .text-dark { color: #0d6efd !important; }
+      .status-in-bar { background-color: #198754; } 
+      .status-out-bar { background-color: #dc3545; } 
+      .status-sick-bar { background-color: #ffc107; } 
+      .badge-in { background-color: #d1e7dd; color: #0f5132; }
+      .badge-out { background-color: #f8d7da; color: #842029; }
+      .badge-sick { background-color: #fff3cd; color: #664d03; }
+      
+      .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      .toast-container { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 1050; width: max-content; }
+      .custom-toast { background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+      .form-check-input { width: 1.4em; height: 1.4em; margin-top: 0.3em; cursor: pointer; border: 2px solid #adb5bd; }
+      .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
+      .info-pill { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; color: #6c757d; margin-right: 4px; }
+      #floatingActionBar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px 15px 25px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 1030; display: none; border-radius: 20px 20px 0 0; }
+      .chart-container { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+      .nav-pills .nav-link { font-size: 0.75rem; font-weight: 700; padding: 8px 2px; }
+      .nav-pills .nav-link.active { background-color: #0d6efd; }
+      
+      .pending-card { background: #fff3cd; border: 1px solid #ffe69c; border-radius: 10px; padding: 12px; margin-bottom: 10px;}
+    </style>
+  </head>
+  <body>
+
+    <div id="loginScreen">
+      <div class="login-card">
+        <div class="text-center mb-4">
+          <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+            <i class="fas fa-shield-alt fa-2x"></i>
+          </div>
+          <h4 class="fw-bold text-dark m-0">Sistem Asrama</h4>
+          <small class="text-muted">Sila log masuk untuk meneruskan</small>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label small fw-bold text-secondary">ID Pengguna</label>
+          <input type="text" id="loginUsername" class="form-control form-control-lg bg-light" placeholder="Contoh: warden1">
+        </div>
+        <div class="mb-4">
+          <label class="form-label small fw-bold text-secondary">Kata Laluan</label>
+          <input type="password" id="loginPass" class="form-control form-control-lg bg-light" placeholder="Masukkan Kata Laluan">
+        </div>
+        
+        <button class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm" id="btnLogin" onclick="prosesLogMasuk()">LOG MASUK</button>
+        <div id="loginError" class="text-danger small mt-3 text-center fw-bold" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="loader" class="loading-overlay" style="display:none;">
+      <div class="spinner-border text-primary mb-3"></div>
+      <div class="fw-bold text-secondary">Memuatkan Sistem...</div>
+    </div>
+
+    <div class="toast-container">
+      <div id="syncToast" class="custom-toast"><i class="fas fa-check-circle text-success me-2"></i> Sistem dikemaskini!</div>
+      <div id="savingToast" class="custom-toast"><i class="fas fa-circle-notch fa-spin me-2"></i> Memproses...</div>
+    </div>
+
+    <div id="mainDashboard">
+      <div class="container px-2">
+        <div class="sticky-header">
+          <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+            <div>
+              <h5 class="fw-bold m-0 text-dark">Sistem Asrama</h5>
+              <small class="text-muted" id="roleText">Memuatkan peranan...</small>
+            </div>
+            <div>
+              <button class="btn btn-light btn-sm rounded-circle shadow-sm me-1" onclick="loadDataServer()" style="width: 38px; height: 38px;"><i class="fas fa-sync-alt text-primary"></i></button>
+              <button class="btn btn-danger btn-sm rounded-circle shadow-sm" onclick="logKeluar()" style="width: 38px; height: 38px;" title="Log Keluar"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+          </div>
+
+          <div class="input-group shadow-sm rounded-3 overflow-hidden bg-white mb-2">
+            <span class="input-group-text bg-white border-0 ps-3"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="searchInput" class="form-control border-0 py-2" placeholder="Cari nama, blok, kelas..." onkeyup="filterList()">
+            <button class="btn btn-outline-secondary border-0 border-start fw-bold text-primary" type="button" onclick="toggleSelectAllVisible()"><i class="fas fa-check-double me-1"></i> Semua</button>
+          </div>
+
+          <ul class="nav nav-pills nav-fill bg-white p-1 rounded-3 shadow-sm" id="pills-tab" role="tablist">
+            <li class="nav-item"><button class="nav-link active" id="pills-all-tab" data-bs-toggle="pill" data-bs-target="#pills-all">Semua</button></li>
+            <li class="nav-item"><button class="nav-link" id="pills-in-tab" data-bs-toggle="pill" data-bs-target="#pills-in">Ada</button></li> 
+            <li class="nav-item" id="tab-today-li"><button class="nav-link" id="pills-today-tab" data-bs-toggle="pill" data-bs-target="#pills-today">Harian</button></li>
+            <li class="nav-item" id="tab-sick-li"><button class="nav-link" id="pills-sick-tab" data-bs-toggle="pill" data-bs-target="#pills-sick">Sakit</button></li>
+            <li class="nav-item"><button class="nav-link" id="pills-out-tab" data-bs-toggle="pill" data-bs-target="#pills-out">Keluar</button></li>
+            <li class="nav-item" id="tab-pending-li" style="display:none;">
+              <button class="nav-link text-danger" id="pills-pending-tab" data-bs-toggle="pill" data-bs-target="#pills-pending">
+                Sah <span class="badge bg-danger ms-1" id="pendingBadge">0</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="tab-content mt-2" id="pills-tabContent">
+          <div class="tab-pane fade show active" id="pills-all">
+            <div class="chart-container" id="chartArea">
+               <div class="d-flex justify-content-between mb-2"><h6 class="fw-bold text-dark m-0">Rumusan</h6><small class="text-muted" id="lastUpdateTxt">...</small></div>
+               <div style="height: 150px; position: relative;"><canvas id="summaryChart"></canvas></div>
+               <div class="row text-center mt-2 small fw-bold">
+                 <div class="col-4 text-success"><span id="countIn">0</span> Ada</div>
+                 <div class="col-4 text-danger"><span id="countOut">0</span> Keluar</div>
+                 <div class="col-4 text-warning"><span id="countSick">0</span> Sakit</div>
+               </div>
+            </div>
+            <div id="allListContainer"></div>
+          </div>
+          <div class="tab-pane fade" id="pills-in">
+             <div class="d-flex justify-content-between mb-2 px-2"><small class="fw-bold text-success">SENARAI ADA</small><span class="badge bg-success" id="badgeInCount">0</span></div>
+             <div id="inListContainer"></div>
+             <div id="noInMsg" class="text-center py-5 text-muted" style="display:none"><p>Tiada murid di asrama?</p></div>
+          </div>
+          <div class="tab-pane fade" id="pills-today">
+             <div class="d-flex justify-content-between mb-2 px-2"><small class="fw-bold text-info">KELUAR HARI INI</small><span class="badge bg-info text-dark" id="badgeTodayCount">0</span></div>
+             <div id="todayListContainer"></div>
+             <div id="noTodayMsg" class="text-center py-5 text-muted" style="display:none"><p>Tiada pergerakan keluar hari ini.</p></div>
+          </div>
+          <div class="tab-pane fade" id="pills-sick">
+             <div class="d-flex justify-content-between mb-2 px-2"><small class="fw-bold text-warning">SENARAI SAKIT</small><span class="badge bg-warning text-dark" id="badgeSickCount">0</span></div>
+             <div id="sickListContainer"></div>
+             <div id="noSickMsg" class="text-center py-5 text-muted" style="display:none"><p>Semua murid sihat!</p></div>
+          </div>
+          <div class="tab-pane fade" id="pills-out">
+            <div class="d-flex justify-content-between mb-2 px-2"><small class="fw-bold text-danger">SENARAI KELUAR</small><span class="badge bg-danger" id="badgeOutCount">0</span></div>
+            <div id="outListContainer"></div>
+            <div id="noOutMsg" class="text-center py-5 text-muted" style="display:none"><p>Semua murid berada di asrama.</p></div>
+          </div>
+          
+          <div class="tab-pane fade" id="pills-pending">
+             <div class="d-flex justify-content-between mb-2 px-2"><small class="fw-bold text-dark" id="pendingTitleText">MENUNGGU PENGESAHAN</small></div>
+             <div id="pendingListContainer"></div>
+             <div id="noPendingMsg" class="text-center py-5 text-muted" style="display:none">
+               <i class="fas fa-check-circle fa-2x mb-3 text-success opacity-50"></i>
+               <p>Tiada rekod tertunggak.</p>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="floatingActionBar">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div><span class="fw-bold text-dark d-block"><span id="selectedCount">0</span> Dipilih</span><small class="text-muted" id="lockMsg" style="font-size: 0.7rem;">Tindakan murid terpilih</small></div>
+          <button class="btn btn-sm btn-secondary rounded-pill px-3" onclick="clearSelection()">Batal</button>
+        </div>
+        <div class="row g-2" id="actionButtonsRow">
+          <div class="col-4" id="colBtnIn"><button id="btnBatchIn" class="btn btn-success w-100 fw-bold py-2 small" onclick="openActionModal('Masuk', true)">MASUK</button></div>
+          <div class="col-4" id="colBtnSick"><button id="btnBatchSick" class="btn btn-warning w-100 fw-bold py-2 small text-dark" onclick="openActionModal('Sakit', true)">SAKIT</button></div>
+          <div class="col-4" id="colBtnOut"><button id="btnBatchOut" class="btn btn-danger w-100 fw-bold py-2 small" onclick="openActionModal('Keluar', true)">KELUAR</button></div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="actionModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light"><h5 class="modal-title fw-bold" id="modalTitle">Tindakan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+              <form id="statusForm">
+                <input type="hidden" id="actionType" name="actionType"><input type="hidden" id="studentNames" name="studentNames"><input type="hidden" id="imageBase64" name="imageFile">
+                <div class="mb-3 p-2 bg-light rounded border"><small class="text-muted d-block">Nama Murid:</small><strong id="displayNames" class="text-primary"></strong></div>
+                <div class="row g-2 mb-3">
+                  <div class="col-7"><label class="small fw-bold">Tarikh</label><input type="date" class="form-control" id="customDate" name="customDate" required></div>
+                  <div class="col-5"><label class="small fw-bold">Masa</label><input type="time" class="form-control" id="customTime" name="customTime" required></div>
+                </div>
+                <div class="mb-3" id="reasonContainer"><label class="small fw-bold" id="reasonLabel">Sebab <span class="text-danger">*</span></label><textarea class="form-control" id="reasonInput" name="reason" rows="2"></textarea></div>
+                <div class="mb-3"><label class="small fw-bold">Lampiran Gambar (Pilihan)</label><input class="form-control" type="file" id="fileInput" accept="image/*"></div>
+              </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary fw-bold px-4" onclick="submitForm()">SAHKAN</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="detailsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-white border-bottom-0"><h5 class="modal-title fw-bold">Butiran Terkini</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body pt-0">
+              <div class="text-center mb-4"><h4 class="fw-bold mb-0 text-primary" id="detName">Name</h4><span class="badge bg-secondary" id="detClass">Class</span><div class="mt-2"><span class="badge" id="detStatusBadge">STATUS</span></div></div>
+              <div class="card bg-light border-0 mb-3"><div class="card-body py-2"><div class="row"><div class="col-6 border-end"><small class="text-muted fw-bold d-block" id="lblDate">Tarikh</small><span id="detDate" class="fw-bold text-dark">-</span></div><div class="col-6"><small class="text-muted fw-bold d-block">Masa</small><span id="detTime" class="fw-bold text-dark">-</span></div></div></div></div>
+              <div class="mb-3"><small class="text-muted fw-bold" id="lblReason">Catatan / Sebab</small><div class="p-3 bg-light rounded border mt-1 text-dark" id="detReason" style="min-height: 50px;">-</div></div>
+              <div class="text-center"><small class="text-muted fw-bold d-block mb-1">Lampiran Gambar</small><img id="detImage" class="img-fluid rounded shadow-sm border" style="display:none; max-height:250px; width:100%; object-fit:cover;"><div id="noImageMsg" class="text-muted small fst-italic py-2" style="display:none;">Tiada gambar dilampirkan.</div></div>
+            </div>
+            <div class="modal-footer border-top-0 justify-content-center"><button class="btn btn-secondary w-100 rounded-pill" data-bs-dismiss="modal">Tutup</button></div>
+          </div>
+        </div>
+      </div>
+    </div> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      var allStudents = [], allPending = [];
+      var selectedStudents = new Set(); 
+      var actionModal, detailsModal, myPieChart;
+      
+      var userRole = ""; 
+      var userEmail = ""; 
+
+      window.onload = function() {
+        actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
+        detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+      };
+
+      function prosesLogMasuk() {
+        var uname = document.getElementById('loginUsername').value;
+        var pass = document.getElementById('loginPass').value;
+        var btn = document.getElementById('btnLogin');
+        var err = document.getElementById('loginError');
+
+        if(!uname || !pass) { err.innerText = "Sila isi ID Pengguna dan kata laluan."; err.style.display = 'block'; return; }
+        btn.disabled = true; btn.innerText = "MENYEMAK..."; err.style.display = 'none';
+
+        google.script.run.withSuccessHandler(res => {
+          if(res.status === "berjaya") {
+             userRole = res.peranan;
+             userEmail = res.username; 
+             document.getElementById('loginScreen').style.display = 'none';
+             document.getElementById('mainDashboard').style.display = 'block';
+             loadDataServer();
+          } else {
+             err.innerText = res.mesej; err.style.display = 'block';
+             btn.disabled = false; btn.innerText = "LOG MASUK";
+          }
+        }).withFailureHandler(e => {
+           err.innerText = "Ralat komunikasi dengan pelayan."; err.style.display = 'block';
+           btn.disabled = false; btn.innerText = "LOG MASUK";
+        }).sahkanLogMasuk(uname, pass);
+      }
+
+      function logKeluar() {
+        userRole = ""; userEmail = "";
+        document.getElementById('mainDashboard').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('loginPass').value = '';
+        document.getElementById('btnLogin').disabled = false;
+        document.getElementById('btnLogin').innerText = "LOG MASUK";
+      }
+      
+      function loadDataServer() {
+        document.getElementById('loader').style.display = 'flex';
+        clearSelection();
+        google.script.run.withSuccessHandler(data => {
+           setupUIForRole(data.role, data.email);
+           allPending = data.pending;
+           renderPendingData();
+           renderData(data.students); 
+           document.getElementById('loader').style.display = 'none'; 
+        }).withFailureHandler(err => { 
+           alert("Ralat memuat data: " + err); document.getElementById('loader').style.display = 'none'; 
+        }).getAppInitData(userEmail);
+      }
+
+      function setupUIForRole(role, email) {
+        if (role === 'guard') {
+          document.getElementById('roleText').innerText = "Pengawal: " + email;
+          document.getElementById('tab-sick-li').style.display = 'none';
+          document.getElementById('tab-today-li').style.display = 'none';
+          document.getElementById('chartArea').style.display = 'none';
+          
+          document.getElementById('colBtnSick').style.display = 'none';
+          document.getElementById('colBtnIn').className = 'col-6';
+          document.getElementById('colBtnOut').className = 'col-6';
+          
+          document.getElementById('tab-pending-li').style.display = 'block';
+          var pendingTab = document.getElementById('pills-pending-tab');
+          pendingTab.innerHTML = 'Menunggu <span class="badge bg-warning text-dark ms-1" id="pendingBadge">0</span>';
+          pendingTab.classList.remove('text-danger');
+          pendingTab.classList.add('text-warning');
+          document.getElementById('pendingTitleText').className = "fw-bold text-warning";
+        } else {
+          document.getElementById('roleText').innerText = "Warden: " + email;
+          document.getElementById('tab-pending-li').style.display = 'block';
+          var pendingTab = document.getElementById('pills-pending-tab');
+          pendingTab.innerHTML = 'Sah <span class="badge bg-danger ms-1" id="pendingBadge">0</span>';
+          pendingTab.classList.remove('text-warning');
+          pendingTab.classList.add('text-danger');
+          document.getElementById('pendingTitleText').className = "fw-bold text-danger";
+        }
+      }
+
+      function renderPendingData() {
+        var container = document.getElementById('pendingListContainer');
+        container.innerHTML = '';
+        document.getElementById('pendingBadge').innerText = allPending.length;
+        
+        if(allPending.length === 0) {
+           document.getElementById('noPendingMsg').style.display = 'block';
+        } else {
+           document.getElementById('noPendingMsg').style.display = 'none';
+           allPending.forEach(p => {
+              var d = new Date(p.timestamp);
+              var dateStr = d.toLocaleDateString('en-GB') + " " + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+              var badge = p.action === 'Keluar' ? 'bg-danger' : 'bg-success';
+              
+              var finalImgUrl = p.imageUrl;
+              if (finalImgUrl && finalImgUrl.includes("uc?export=view&id=")) {
+                 finalImgUrl = finalImgUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+              }
+              var imgIcon = finalImgUrl ? `<i class="fas fa-image text-primary me-2" onclick="window.open('${finalImgUrl}')" style="cursor:pointer" title="Lihat Gambar"></i>` : '';
+              
+              var actionArea = "";
+              if (userRole === 'warden') {
+                 actionArea = `
+                  <button class="btn btn-sm btn-outline-danger me-1" onclick="resolvePendingReq('${p.id}', false)">Tolak</button>
+                  <button class="btn btn-sm btn-success px-3" onclick="resolvePendingReq('${p.id}', true)">Lulus</button>
+                 `;
+              } else {
+                 actionArea = `<span class="badge bg-warning text-dark py-2"><i class="fas fa-hourglass-half me-1"></i> Menunggu Warden</span>`;
+              }
+              
+              var html = `
+              <div class="pending-card shadow-sm" id="pending-${p.id}">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <h6 class="fw-bold m-0 text-dark">${p.name}</h6>
+                  <span class="badge ${badge}">${p.action}</span>
+                </div>
+                <div class="small text-muted mb-2"><i class="far fa-clock me-1"></i> ${dateStr} <br><i class="far fa-user me-1"></i> ${p.guardEmail}</div>
+                <div class="small bg-white p-2 border rounded mb-2">Sebab: <span class="fw-bold">${p.reason}</span></div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <div>${imgIcon}</div>
+                  <div>${actionArea}</div>
+                </div>
+              </div>`;
+              container.innerHTML += html;
+           });
+        }
+      }
+
+      function resolvePendingReq(id, isApproved) {
+         var savingToast = document.getElementById('savingToast');
+         savingToast.style.display = 'block';
+
+         var card = document.getElementById('pending-' + id);
+         if (card) card.style.display = 'none'; 
+
+         google.script.run.withSuccessHandler(res => {
+            savingToast.style.display = 'none';
+            var syncToast = document.getElementById('syncToast');
+            syncToast.innerHTML = '<i class="fas fa-info-circle text-info me-2"></i> ' + res;
+            syncToast.style.display = 'block';
+            setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
+            
+            google.script.run.withSuccessHandler(data => {
+               allPending = data.pending;
+               renderPendingData();
+               renderData(data.students); 
+            }).getAppInitData(userEmail);
+
+         }).withFailureHandler(err => {
+            savingToast.style.display = 'none';
+            var syncToast = document.getElementById('syncToast');
+            syncToast.innerHTML = '<i class="fas fa-exclamation-triangle text-danger me-2"></i> Gagal diproses.';
+            syncToast.style.display = 'block';
+            setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
+            if (card) card.style.display = 'block'; 
+         }).resolvePending(id, isApproved, userEmail);
+      }
+
+      function renderData(data) {
+        if (!data || !Array.isArray(data)) return;
+        allStudents = data; 
+        var containers = { all: document.getElementById('allListContainer'), in: document.getElementById('inListContainer'), today: document.getElementById('todayListContainer'), sick: document.getElementById('sickListContainer'), out: document.getElementById('outListContainer') };
+        Object.values(containers).forEach(c => c.innerHTML = '');
+        var counts = { in: 0, out: 0, sick: 0, today: 0 };
+        var now = new Date(); var todayStr = now.toISOString().split('T')[0];
+
+        data.forEach(student => {
+          var safeName = student.name.replace(/'/g, "\\'");
+          var status = student.status;
+          if(status === 'Keluar') counts.out++; else if(status === 'Sakit') counts.sick++; else counts.in++; 
+          var barColor = status === 'Sakit' ? 'status-sick-bar' : (status === 'Keluar' ? 'status-out-bar' : 'status-in-bar');
+          var badgeClass = status === 'Sakit' ? 'badge-sick' : (status === 'Keluar' ? 'badge-out' : 'badge-in');
+          var badgeText = status === 'Sakit' ? 'SAKIT' : (status === 'Keluar' ? 'KELUAR' : 'ADA');
+
+          var durationHtml = "";
+          if ((status === 'Keluar' || status === 'Sakit') && student.timestamp) {
+             var lastDate = new Date(student.timestamp);
+             var timeDiff = now.getTime() - lastDate.getTime();
+             var dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+             var displayTxt = (dayDiff === 0) ? "Hari Ini" : dayDiff + " Hari";
+             durationHtml = `<div class="mt-1 small fw-bold text-muted"><i class="far fa-clock me-1"></i> ${displayTxt}</div>`;
+          }
+
+          var cardHtml = `<div class="student-card student-item" data-status="${status}"><div class="card-status-bar ${barColor}"></div><div class="p-3 d-flex align-items-center"><div class="me-3"><input class="form-check-input student-checkbox" type="checkbox" value="${student.name}" onchange="toggleSelection(this)"></div><div class="flex-grow-1 clickable-area" onclick="showDetails('${safeName}')"><div class="d-flex justify-content-between align-items-start mb-1"><div><h6 class="fw-bold mb-1 text-dark">${student.name} <i class="fas fa-info-circle text-muted ms-1 small"></i></h6><div class="mb-1"><span class="info-pill">${student.block}</span><span class="info-pill">${student.classroom}</span></div></div><div class="d-flex flex-column align-items-end"><span class="status-badge ${badgeClass} mb-1">${badgeText}</span>${durationHtml}<i class="fas fa-chevron-right text-muted mt-1" style="font-size: 0.8em;"></i></div></div></div></div></div>`;
+          
+          containers.all.innerHTML += cardHtml;
+          if (status === 'Masuk' || (!status)) containers.in.innerHTML += cardHtml;
+          else if (status === 'Sakit') containers.sick.innerHTML += cardHtml;
+          else if (status === 'Keluar') { containers.out.innerHTML += cardHtml; if (student.timestamp && student.timestamp.startsWith(todayStr)) { counts.today++; containers.today.innerHTML += cardHtml; }}
+        });
+        
+        if(userRole === 'warden') updateDashboard(counts);
+        
+        document.getElementById('badgeInCount').innerText = counts.in; document.getElementById('badgeSickCount').innerText = counts.sick; 
+        document.getElementById('badgeOutCount').innerText = counts.out; document.getElementById('badgeTodayCount').innerText = counts.today;
+        document.getElementById('noInMsg').style.display = counts.in === 0 ? 'block' : 'none'; document.getElementById('noSickMsg').style.display = counts.sick === 0 ? 'block' : 'none'; 
+        document.getElementById('noOutMsg').style.display = counts.out === 0 ? 'block' : 'none'; document.getElementById('noTodayMsg').style.display = counts.today === 0 ? 'block' : 'none';
+        filterList();
+      }
+
+      function updateDashboard(counts) {
+        document.getElementById('countIn').innerText = counts.in; document.getElementById('countOut').innerText = counts.out; document.getElementById('countSick').innerText = counts.sick; document.getElementById('lastUpdateTxt').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        var ctx = document.getElementById('summaryChart').getContext('2d');
+        if (myPieChart) myPieChart.destroy(); 
+        myPieChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Ada', 'Keluar', 'Sakit'], datasets: [{ data: [counts.in, counts.out, counts.sick], backgroundColor: ['#198754', '#dc3545', '#ffc107'], borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } } } });
+      }
+
+      function toggleSelection(cb) { if (cb.checked) selectedStudents.add(cb.value); else selectedStudents.delete(cb.value); updateActionBar(); }
+      function updateActionBar() {
+        var count = selectedStudents.size;
+        var btnIn = document.getElementById('btnBatchIn'), btnOut = document.getElementById('btnBatchOut'), btnSick = document.getElementById('btnBatchSick'), lockMsg = document.getElementById('lockMsg');
+        document.getElementById('selectedCount').innerText = count;
+        if (count > 0) {
+          document.getElementById('floatingActionBar').style.display = 'block';
+          btnIn.disabled = false; btnOut.disabled = false; btnSick.disabled = false; lockMsg.style.display = 'none';
+          if (count === 1) {
+             var name = selectedStudents.values().next().value;
+             var s = allStudents.find(x => x.name === name);
+             if (s) {
+               if (s.status === 'Masuk' || !s.status) btnIn.disabled = true; else if (s.status === 'Keluar') { btnOut.disabled = true; btnSick.disabled = true; } else if (s.status === 'Sakit') btnSick.disabled = true;
+             }
+          } else { lockMsg.innerText = "Mod Pukal"; lockMsg.style.display = 'inline'; }
+        } else { document.getElementById('floatingActionBar').style.display = 'none'; }
+      }
+      function clearSelection() { selectedStudents.clear(); document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false); updateActionBar(); }
+      function toggleSelectAllVisible() { var cards = document.querySelectorAll('.tab-pane.active .student-item:not([style*="display: none"])'); if (cards.length === 0) return; var cbs = []; cards.forEach(c => cbs.push(c.querySelector('.student-checkbox'))); var allChecked = cbs.every(cb => cb.checked); cbs.forEach(cb => { cb.checked = !allChecked; if(cb.checked) selectedStudents.add(cb.value); else selectedStudents.delete(cb.value); }); updateActionBar(); }
+      
+      function filterList() { 
+         var f = document.getElementById("searchInput").value.toUpperCase(); 
+         var c = document.getElementsByClassName("student-item"); 
+         for (var i = 0; i < c.length; i++) { 
+           var t = c[i].innerText || c[i].textContent; 
+           c[i].style.display = t.toUpperCase().indexOf(f) > -1 ? "" : "none"; 
+         } 
+      }
+      
+      function openActionModal(action, isBatch, singleName) {
+        var names = isBatch ? Array.from(selectedStudents) : [singleName];
+        if(names.length === 0) return;
+
+        document.getElementById('fileInput').value = ''; document.getElementById('imageBase64').value = ''; document.getElementById('reasonInput').value = ''; 
+        document.getElementById('actionType').value = action; document.getElementById('studentNames').value = JSON.stringify(names);
+        document.getElementById('displayNames').innerText = names.length < 5 ? names.join(', ') : names.length + " Murid dipilih";
+
+        var t = document.getElementById('modalTitle'), rDiv = document.getElementById('reasonContainer'), rInput = document.getElementById('reasonInput');
+        if (action === 'Masuk') { t.innerText = 'Daftar MASUK'; t.className = 'modal-title fw-bold text-success'; rDiv.style.display = 'none'; rInput.required = false; }
+        else { t.innerText = action === 'Sakit' ? 'Lapor SAKIT' : 'Daftar KELUAR'; t.className = action === 'Sakit' ? 'text-warning' : 'text-danger'; t.classList.add('modal-title','fw-bold'); rDiv.style.display = 'block'; rInput.required = true; document.getElementById('reasonLabel').innerText = action === 'Keluar' ? 'Sebab' : 'Simptom'; }
+        
+        var now = new Date(); document.getElementById('customDate').value = now.toISOString().split('T')[0]; document.getElementById('customTime').value = now.toTimeString().substring(0,5);
+        actionModal.show();
+      }
+
+      function submitForm() {
+        if(document.getElementById('reasonContainer').style.display !== 'none' && !document.getElementById('reasonInput').value.trim()) { alert("Sila isi sebab!"); return; }
+        actionModal.hide();
+        var savingToast = document.getElementById('savingToast'); savingToast.style.display = 'block';
+
+        var fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length > 0) {
+          var reader = new FileReader(); reader.readAsDataURL(fileInput.files[0]);
+          reader.onload = function () { document.getElementById('imageBase64').value = reader.result; sendDataOptimistic(); };
+        } else { sendDataOptimistic(); }
+      }
+
+      function sendDataOptimistic() {
+        var f = document.getElementById('statusForm');
+        var rawNames = f.studentNames.value; var names = JSON.parse(rawNames);
+        var action = f.actionType.value; var reason = f.reason.value;
+        var timestamp = f.customDate.value + 'T' + f.customTime.value;
+        var imageBase64 = f.imageFile.value;
+
+        if(userRole === 'warden') {
+            names.forEach(n => {
+               var s = allStudents.find(x => x.name === n);
+               if (s) { 
+                 s.status = action; 
+                 s.reason = (action === 'Masuk') ? '-' : reason; 
+                 s.timestamp = timestamp; 
+                 // Gambar dibiarkan tidak dikosongkan supaya kemas kini berjalan lancar
+               }
+            });
+            renderData(allStudents);
+        }
+        clearSelection();
+
+        var d = { studentNames: rawNames, actionType: action, customDate: f.customDate.value, customTime: f.customTime.value, reason: reason, imageFile: imageBase64 };
+        
+        google.script.run.withSuccessHandler(res => { 
+           document.getElementById('savingToast').style.display = 'none';
+           var syncToast = document.getElementById('syncToast'); syncToast.innerText = res; syncToast.style.display = 'block';
+           setTimeout(() => { syncToast.style.display = 'none'; }, 4000);
+           if(userRole === 'guard') { loadDataServer(); } 
+        }).withFailureHandler(err => { 
+           alert("Gagal: " + err); document.getElementById('savingToast').style.display = 'none'; loadDataServer(); 
+        }).processEntry(d, userEmail);
+      }
+
+      function showDetails(name) {
+         var s = allStudents.find(x => x.name === name); if(!s) return;
+         
+         document.getElementById('detName').innerText = s.name; 
+         document.getElementById('detClass').innerText = s.block + " | " + s.classroom;
+         
+         var b = document.getElementById('detStatusBadge'); 
+         b.innerText = s.status; 
+         b.className = "badge " + (s.status==='Keluar'?'bg-danger':(s.status==='Sakit'?'bg-warning text-dark':'bg-success'));
+         
+         var lr = document.getElementById('lblReason'), ld = document.getElementById('lblDate');
+         if(s.status === 'Keluar') { lr.innerText = "Sebab Keluar"; ld.innerText = "Tarikh Keluar"; } 
+         else if (s.status === 'Sakit') { lr.innerText = "Simptom"; ld.innerText = "Tarikh Lapor"; } 
+         else { lr.innerText = "Catatan"; ld.innerText = "Tarikh Masuk"; }
+         
+         document.getElementById('detReason').innerText = s.reason;
+         
+         if(s.timestamp) { 
+           var d = new Date(s.timestamp); 
+           document.getElementById('detDate').innerText = d.toLocaleDateString('en-GB'); 
+           document.getElementById('detTime').innerText = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); 
+         } else { 
+           document.getElementById('detDate').innerText = "-"; 
+           document.getElementById('detTime').innerText = "-"; 
+         }
+         
+         var img = document.getElementById('detImage'), noImg = document.getElementById('noImageMsg');
+         var finalImgUrl = s.imageUrl;
+
+         if (finalImgUrl && finalImgUrl.includes("uc?export=view&id=")) {
+            finalImgUrl = finalImgUrl.replace("uc?export=view&id=", "thumbnail?id=") + "&sz=w800";
+         }
+
+         if(finalImgUrl && finalImgUrl.length > 5) { 
+           img.src = finalImgUrl; 
+           img.style.display = 'block'; 
+           noImg.style.display = 'none'; 
+         } else { 
+           img.src = ""; 
+           img.style.display = 'none'; 
+           noImg.style.display = 'block'; 
+         }
+         
+         detailsModal.show();
+      }
+    </script>
+  </body>
+</html>
