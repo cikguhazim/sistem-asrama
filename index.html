@@ -63,15 +63,19 @@
 
   <div id="mainDashboard">
     <nav class="navbar navbar-dark bg-primary sticky-top">
-  <div class="container-fluid">
-    <span class="navbar-brand mb-0 h1 d-flex align-items-center">
-      <img src="logosekolah.png" alt="Logo" style="height: 35px; width: auto; margin-right: 10px; background-color: white; border-radius: 5px; padding: 2px;"> 
-      E-Kehadiran Asrama <span id="userBadge" class="badge bg-light text-primary ms-2 fs-6"></span>
-    </span>
-        <div>
+      <div class="container-fluid flex-nowrap">
+        
+        <span class="navbar-brand mb-0 h1 d-flex align-items-center text-truncate pe-2" style="min-width: 0;">
+          <img src="logo.png" alt="Logo" style="height: 32px; width: auto; margin-right: 8px; background-color: white; border-radius: 4px; padding: 2px; flex-shrink: 0;">
+          <span class="text-truncate">e-Asrama</span>
+          <span id="userBadge" class="badge bg-light text-primary ms-2 flex-shrink-0" style="font-size: 0.75rem;"></span>
+        </span>
+
+        <div class="d-flex flex-shrink-0">
           <button class="btn btn-sm btn-outline-light me-2" onclick="loadDataServer()"><i class="fas fa-sync-alt"></i></button>
           <button class="btn btn-sm btn-danger" onclick="logKeluar()"><i class="fas fa-sign-out-alt"></i></button>
         </div>
+
       </div>
     </nav>
 
